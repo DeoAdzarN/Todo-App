@@ -21,6 +21,10 @@ class AttachmentRepository(private val attachmentDao: AttachmentDao, private val
         syncAttachmentWithFirestore(attachment,onResult)
     }
 
+    suspend fun insertAttachmentOffline(attachment: List<Attachment>) {
+        attachmentDao.insertAttachment(attachment)
+    }
+
     suspend fun getAllAttachment(): List<Attachment> {
         return withContext(Dispatchers.IO) {
             attachmentDao.getAllAttachment()
@@ -65,6 +69,7 @@ class AttachmentRepository(private val attachmentDao: AttachmentDao, private val
 
     }
 
+    //getData After Login
     fun syncMediaFromFirestore() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         firestore.collection("users").document(userId)
@@ -77,12 +82,24 @@ class AttachmentRepository(private val attachmentDao: AttachmentDao, private val
 
                 CoroutineScope(Dispatchers.IO).launch {
                     attachmentDao.insertAttachment(attachment)
-
                 }
             }
             .addOnFailureListener { exception ->
                 Log.e("fetchTasksAndSaveToRoom", "Error fetching tasks: ${exception.message}")
             }
+    }
+
+    suspend fun syncOfflineAttach() {
+        val unsyncedAttach = attachmentDao.getUnsyncedAttach()
+        syncAttachmentWithFirestore(unsyncedAttach, onResult = { success, result ->
+            if (success) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    unsyncedAttach.forEach {
+                        attachmentDao.updateAttach(it.copy(synced = true))
+                    }
+                }
+            }
+        })
     }
 
 }

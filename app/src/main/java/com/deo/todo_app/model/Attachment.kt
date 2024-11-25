@@ -12,4 +12,5 @@ data class Attachment(
     val type: String = "image", // "image", "video"
     var url: String = "",
     val path: String = "",
+    val synced: Boolean = false
 )

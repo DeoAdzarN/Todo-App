@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.text.InputType
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
@@ -58,6 +59,17 @@ object CustomDialog {
             .setView(dialogView)
             .create()
 
+        val toggleCurrentPassword = dialogView.findViewById<ImageView>(R.id.visibilityCurrentPassword)
+        val toggleNewPassword = dialogView.findViewById<ImageView>(R.id.visibilityNewPassword)
+
+        toggleCurrentPassword.setOnClickListener {
+            toggleVisibilityPassword(currentPasswordEditText, toggleCurrentPassword)
+        }
+
+        toggleNewPassword.setOnClickListener {
+            toggleVisibilityPassword(newPasswordEditText, toggleNewPassword)
+        }
+
         saveButton.setOnClickListener {
             val currentPassword = currentPasswordEditText.text.toString().trim()
             val newPassword = newPasswordEditText.text.toString().trim()
@@ -77,6 +89,22 @@ object CustomDialog {
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.show()
     }
+
+    private fun toggleVisibilityPassword(passwordEditText: EditText, toggleIcon: ImageView) {
+        val currentTypeface = passwordEditText.typeface
+
+        if (passwordEditText.inputType == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD){
+            passwordEditText.inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT
+            toggleIcon.setImageResource(R.drawable.ic_visibility_off)
+        }else{
+            passwordEditText.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            toggleIcon.setImageResource(R.drawable.ic_visible_on)
+        }
+
+        passwordEditText.typeface = currentTypeface
+        passwordEditText.setSelection(passwordEditText.text.length)
+    }
+
     fun showCustomLogoutDialog(
         context: Context,
         isLogout: (Boolean) -> Unit

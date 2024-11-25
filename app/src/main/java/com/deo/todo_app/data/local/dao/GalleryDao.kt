@@ -20,4 +20,7 @@ interface GalleryDao {
 
     @Insert
     suspend fun insertAll(gallery: List<Gallery>)
+
+    @Query("SELECT * FROM gallery WHERE synced = 0")
+    suspend fun getUnsyncedGallery(): List<Gallery>
 }

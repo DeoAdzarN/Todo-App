@@ -21,10 +21,10 @@ class CalendarViewModel(private val taskRepository: TaskRepository) : ViewModel(
     private val _tasksByDate = MutableLiveData<List<Task>>()
     val tasksByDate: LiveData<List<Task>> get() = _tasksByDate
 
-    fun getTasksByDate(date: Long) {
+    fun getTasksByDate(startMilis: Long,endMilis: Long) {
         viewModelScope.launch {
-            taskRepository.getTaskByDate(date).observeForever { tasks ->
-                _tasksByDate.value = tasks
+            taskRepository.getTaskByDate(startMilis, endMilis).observeForever { tasks ->
+                _tasksByDate.postValue(tasks)
             }
         }
     }

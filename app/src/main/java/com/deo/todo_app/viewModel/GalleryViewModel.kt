@@ -34,4 +34,10 @@ class GalleryViewModel(private val galleryRepository: GalleryRepository) : ViewM
     fun fetchGalleryAndSaveToRoom() {
         galleryRepository.syncMediaFromFirestore()
     }
+
+    fun syncGalleryToFirestore() {
+        viewModelScope.launch {
+            galleryRepository.syncOfflineGallery()
+        }
+    }
 }

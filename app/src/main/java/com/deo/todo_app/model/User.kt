@@ -7,6 +7,9 @@ import androidx.room.PrimaryKey
 data class User(
     @PrimaryKey val userId: String,
     val name: String,
+    val picturePath: String?,
+    val pictureUrl: String?,
     val email: String,
-    val isLoggedIn: Boolean
+    val isLoggedIn: Boolean,
+    val isSynced:Boolean
 )

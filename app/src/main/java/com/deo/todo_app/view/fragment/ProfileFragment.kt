@@ -1,19 +1,37 @@
 package com.deo.todo_app.view.fragment
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import androidx.work.WorkManager
+import com.bumptech.glide.Glide
+import com.deo.todo_app.R
 import com.deo.todo_app.data.local.database.AppDatabase
 import com.deo.todo_app.data.repository.AuthRepository
 import com.deo.todo_app.data.repository.UserRepository
 import com.deo.todo_app.databinding.FragmentProfileBinding
+import com.deo.todo_app.model.Gallery
+import com.deo.todo_app.utils.Connectivity.isInternetAvailable
 import com.deo.todo_app.view.activity.LoginActivity
 import com.deo.todo_app.view.dialog.CustomDialog
 import com.deo.todo_app.view.dialog.CustomDialog.showCustomChangePasswordDialog
@@ -25,6 +43,9 @@ import com.deo.todo_app.viewModel.factory.AuthViewModelFactory
 import com.deo.todo_app.viewModel.factory.UserViewModelFactory
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
 
 class ProfileFragment : Fragment() {
     private lateinit var _binding: FragmentProfileBinding
@@ -59,15 +80,36 @@ class ProfileFragment : Fragment() {
             authViewModel = ViewModelProvider(this, factory)[AuthViewModel::class.java]
             userViewModel.userData.observe(viewLifecycleOwner) { user ->
                 name = user?.name
+                Log.e("userData", "onCreateView: ${user?.pictureUrl}, ${user?.picturePath}" )
+                    Glide.with(it)
+                        .load(user?.pictureUrl)
+                        .placeholder(R.drawable.default_profile_picture)
+                        .into(_binding.picture)
                 _binding.greeting.text = "Halo, ${user?.name} !"
+
             }
+
+            _binding.editPicture.setOnClickListener {
+                if (checkAndRequestPermissions()){
+                    openGallery()
+                }
+            }
+
             _binding.logout.setOnClickListener {
                 showCustomLogoutDialog(requireContext()) { isLogout ->
                     if (isLogout) {
                         activity?.let { activities ->
-                            authViewModel.logout(it.context)
+                            if (isInternetAvailable(activities)) {
+                                authViewModel.logout(it.context)
+                            }else{
+                                val update = userViewModel.userData.value?.copy(isLoggedIn = false)
+                                if (update!=null) {
+                                    userViewModel.updateUserLocal(update)
+                                }
+                            }
                             val intent = Intent(activities, LoginActivity::class.java)
-                            WorkManager.getInstance(activities.applicationContext).cancelAllWork()
+                            WorkManager.getInstance(activities.applicationContext)
+                                .cancelAllWork()
                             startActivity(intent)
                             activities.finish()
                         }
@@ -81,17 +123,33 @@ class ProfileFragment : Fragment() {
                     progressDialog.show(parentFragmentManager, "progressDialog")
                     val updateUser = userViewModel.userData.value?.copy(name = newName)
                     if (updateUser != null) {
-                        userViewModel.updateUser(updateUser, onResult = { success, message ->
-                            if (success) {
-                                name = newName
-                                _binding.greeting.text = "Halo, $newName !"
-                                Toast.makeText(context, "Update Successfully", Toast.LENGTH_SHORT).show()
-                                progressDialog.dismiss()
-                            } else {
-                                Toast.makeText(context, message.toString(), Toast.LENGTH_SHORT).show()
-                                progressDialog.dismiss()
-                            }
-                        })
+                        if (isInternetAvailable(activity = requireActivity())) {
+                            val updateUserOnline = updateUser.copy(isSynced = true)
+                            userViewModel.updateUser(updateUserOnline, onResult = { success, message ->
+                                if (success) {
+                                    name = newName
+                                    _binding.greeting.text = "Halo, $newName !"
+                                    Toast.makeText(
+                                        context,
+                                        "Update Successfully",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    progressDialog.dismiss()
+                                } else {
+                                    Toast.makeText(context, message.toString(), Toast.LENGTH_SHORT)
+                                        .show()
+                                    progressDialog.dismiss()
+                                }
+                            })
+                        }else{
+                            val updateUserOffline = updateUser.copy(isSynced = false)
+                            userViewModel.updateUserLocal(updateUserOffline)
+                            Toast.makeText(
+                                context,
+                                "Update Successfully, need internet to sync with server",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
             }
@@ -99,7 +157,15 @@ class ProfileFragment : Fragment() {
             _binding.changePassword.setOnClickListener {
                 showCustomChangePasswordDialog(requireContext()) { currentPassword, newPassword ->
                     progressDialog.show(parentFragmentManager, "progressDialog")
-                    authViewModel.updatePassword(currentPassword, newPassword)
+                    if (isInternetAvailable(activity = requireActivity())) {
+                        authViewModel.updatePassword(currentPassword, newPassword)
+                    }else{
+                        Toast.makeText(
+                            context,
+                            "Need internet to change password",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
 
@@ -117,7 +183,150 @@ class ProfileFragment : Fragment() {
 
         return view
     }
+        private fun getFileFromUri(context: Context, uri: Uri): File? {
+            return if (uri.scheme == "content") {
+                // Try resolving the actual file path
+                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+                    cursor.moveToFirst()
+                    val filePath = cursor.getString(columnIndex)
+                    File(filePath)
+                }
+            } else if (uri.scheme == "file") {
+                File(uri.path)
+            } else {
+                null
+            }
+        }
+    @SuppressLint("IntentReset")
+    private fun openGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        intent.type = "image/*"
+        pickMediaLauncher.launch(intent)
+    }
 
+    private val pickMediaLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri = result.data?.data
+            if (uri != null) {
+                progressDialog.show(parentFragmentManager, "progressDialog")
+                uri.let { uri ->
+                    try {
+                        activity?.let {
+                            if (isInternetAvailable(it)){
+                                userViewModel.updatePicture(uri, onResult = { success, message ->
+                                    if (success) {
+                                        Glide.with(it).load(uri)
+                                            .placeholder(R.drawable.default_profile_picture)
+                                            .into(_binding.picture)
+                                        Toast.makeText(
+                                            context,
+                                            "Update Successfully",
+                                            Toast.LENGTH_SHORT).show()
+                                    }else{
+                                        Toast.makeText(context, message.toString(), Toast.LENGTH_SHORT)
+                                            .show()
+                                    }
+                                })
+                            }else{
+                                val update = userViewModel.userData.value?.copy(picturePath = uri.toString(), pictureUrl = "")
+                                if (update!=null) {
+                                    userViewModel.updateUserLocal(update)
+                                    Glide.with(it).load(uri)
+                                        .placeholder(R.drawable.default_profile_picture)
+                                        .into(_binding.picture)
+                                }
+                                Toast.makeText(
+                                    context,
+                                    "Update Successfully, need internet to sync with server",
+                                    Toast.LENGTH_SHORT).show()
+                            }
+                            progressDialog.dismiss()
+                        }
+                    } catch (e: IOException) {
+                        Log.e("ImagePicker", "Error processing URI: ${e.message}")
+                        Toast.makeText(context, "Failed to process image URI", Toast.LENGTH_SHORT).show()
+                        progressDialog.dismiss()
+                    }
+                }
+            } else {
+                progressDialog.dismiss()
+                Toast.makeText(context, "No media selected", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun checkAndRequestPermissions(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val readImagesPermission = ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.READ_MEDIA_IMAGES
+            )
+            if (readImagesPermission != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    context as Activity,
+                    arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                    101
+                )
+                false
+            } else {
+                true
+            }
+        } else {
+            val readStoragePermission = ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+            if (readStoragePermission != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    context as Activity,
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                    101
+                )
+                false
+            } else {
+                true
+            }
+        }
+    }
+    @SuppressLint("IntentReset")
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 101) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+            } else {
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(context as Activity, permissions[0])) {
+                    showPermissionRationaleDialog()
+                }
+            }
+        }
+    }
+
+    private fun showPermissionRationaleDialog() {
+        AlertDialog.Builder(context)
+            .setTitle("Storage Permission Required")
+            .setMessage("This app needs storage permission to pick and save images. Please enable the permission in settings.")
+            .setPositiveButton("Go to Settings") { _, _ ->
+                val packageName = context?.packageName
+                val intent = Intent(
+                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:$packageName")
+                )
+                intent.addCategory(Intent.CATEGORY_DEFAULT)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
     override fun onResume() {
         super.onResume()
         userViewModel.getUserData()

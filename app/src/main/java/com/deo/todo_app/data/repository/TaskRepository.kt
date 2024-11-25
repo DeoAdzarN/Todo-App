@@ -28,8 +28,8 @@ class TaskRepository(private val taskDao: TaskDao, private val firestore: Fireba
     suspend fun getTaskByMonth(startMilis: Long, endMilis:Long): List<Task>{
         return taskDao.getTasksInRange(startMilis, endMilis)
     }
-    fun getTaskByDate(dateMilis: Long): LiveData<List<Task>>{
-        return taskDao.getTasksByDate(dateMilis)
+    fun getTaskByDate(startMilis: Long,endMilis: Long): LiveData<List<Task>>{
+        return taskDao.getTasksByDateRange(startMilis,endMilis)
     }
 
     fun getLimitTaskByStatus(status:String, limit:Int): LiveData<List<Task>>{
@@ -52,10 +52,22 @@ class TaskRepository(private val taskDao: TaskDao, private val firestore: Fireba
         taskDao.insertTask(task)
         syncTaskWithFirestore(task,onResult)
     }
+
+    suspend fun insertTaskOffline(task: Task){
+        val newTask = task.copy(synced = false)
+        taskDao.insertTask(newTask)
+    }
+
     suspend fun updateTask(task: Task, onResult: (userId:String, taskId:String) -> Unit){
         Log.e("updateTask", "step 3")
         taskDao.updateTask(task)
         syncTaskWithFirestore(task, onResult)
+    }
+
+    suspend fun updateTaskOffline(task: Task){
+        Log.e("updateTask", "step 3")
+        val updateTask = task.copy(synced = false)
+        taskDao.updateTask(updateTask)
     }
 
     private fun syncTaskWithFirestore(task: Task, onResult: (userId:String, taskId:String) -> Unit) {
@@ -74,12 +86,12 @@ class TaskRepository(private val taskDao: TaskDao, private val firestore: Fireba
             }
     }
 
-    suspend fun syncOfflineTasks(context:Context) {
+    suspend fun syncOfflineTasks() {
         val unsyncedTasks = taskDao.getUnsyncedTasks()
         unsyncedTasks.forEach {
             syncTaskWithFirestore(it, onResult = { userId, taskId ->
             })
-            taskDao.insertTask(it.copy(synced = true))
+            taskDao.updateTask(it.copy(synced = true))
         }
     }
 

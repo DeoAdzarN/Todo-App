@@ -13,6 +13,7 @@ import com.deo.todo_app.data.local.database.AppDatabase
 import com.deo.todo_app.data.repository.AuthRepository
 import com.deo.todo_app.data.repository.TaskRepository
 import com.deo.todo_app.data.repository.UserRepository
+import com.deo.todo_app.utils.Connectivity.isInternetAvailable
 import com.deo.todo_app.viewModel.AuthViewModel
 import com.deo.todo_app.viewModel.TaskViewModel
 import com.deo.todo_app.viewModel.factory.AuthViewModelFactory
@@ -42,7 +43,14 @@ class SplashScreenActivity : AppCompatActivity() {
         authViewModel.sessionState.observe(this) { user ->
             if (user != null ){
                 Log.e("sessionCheck", "user not null" )
-                startActivity(Intent(this, MainActivity::class.java))
+                if (user.isLoggedIn){
+                    startActivity(Intent(this, MainActivity::class.java))
+                }else{
+                    if (isInternetAvailable(this)){
+                        authViewModel.logout(this)
+                    }
+                    startActivity(Intent(this, LoginActivity::class.java))
+                }
             }else{
                 Log.e("sessionCheck", "user null" )
                 startActivity(Intent(this, LoginActivity::class.java))

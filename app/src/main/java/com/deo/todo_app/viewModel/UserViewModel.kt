@@ -1,5 +1,6 @@
 package com.deo.todo_app.viewModel
 
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -33,7 +34,26 @@ class UserViewModel(private  val userRepository: UserRepository) : ViewModel(){
         }
     }
 
-    private fun updateUserLocal(user:User){
+    fun updatePicture(uri: Uri, onResult: (Boolean, String?) -> Unit){
+        viewModelScope.launch {
+            userRepository.updateUserProfile(uri, onResult = { success, photoUrl ->
+                if (success) {
+                    val updatedUser = userData.value?.copy(picturePath = uri.toString(),pictureUrl = photoUrl?:"")
+                    if (updatedUser != null)
+                        updateUserLocal(updatedUser)
+                    onResult(true, null)
+                } else {
+                    onResult(false, photoUrl)
+                }
+            })
+        }
+    }
+    fun syncUserToFirestore() {
+        viewModelScope.launch {
+            userRepository.syncOfflineUser()
+        }
+    }
+    fun updateUserLocal(user:User){
         viewModelScope.launch {
             userRepository.updateUserLocal(user)
         }

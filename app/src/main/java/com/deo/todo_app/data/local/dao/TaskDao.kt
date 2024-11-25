@@ -60,8 +60,8 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE date >= :startMillis AND date < :endMillis")
     suspend fun getTasksInRange(startMillis: Long, endMillis: Long): List<Task>
 
-    @Query("SELECT * FROM tasks WHERE date = :dateMillis")
-    fun getTasksByDate(dateMillis: Long): LiveData<List<Task>>
+    @Query("SELECT * FROM tasks WHERE date BETWEEN :startOfDay AND :endOfDay ORDER BY date DESC")
+    fun getTasksByDateRange(startOfDay: Long, endOfDay: Long): LiveData<List<Task>>
 
     @Query("SELECT * FROM tasks WHERE status IN ('Pending', 'On Progress')")
     suspend fun getOnGoingTasks(): List<Task>

@@ -1,8 +1,12 @@
 package com.deo.todo_app.view.activity
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
@@ -80,6 +84,7 @@ class MainActivity : AppCompatActivity() {
 
             })
         }
+        checkAndRequestPermissions()
         checkNotificationPermission()
 
     }
@@ -112,6 +117,90 @@ class MainActivity : AppCompatActivity() {
                 // Permission denied
                 Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show()
             }
+        }else if (requestCode == 101) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+            } else {
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(this, permissions[0])) {
+                    showPermissionRationaleDialog()
+                }
+            }
         }
+    }
+
+    private fun checkAndRequestPermissions() {
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+                val permissionsToRequest = mutableListOf<String>()
+                if (ContextCompat.checkSelfPermission(
+                        applicationContext,
+                        Manifest.permission.READ_MEDIA_IMAGES
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    permissionsToRequest.add(Manifest.permission.READ_MEDIA_IMAGES)
+                }
+                if (ContextCompat.checkSelfPermission(
+                        applicationContext,
+                        Manifest.permission.READ_MEDIA_VIDEO
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    permissionsToRequest.add(Manifest.permission.READ_MEDIA_VIDEO)
+                }
+                if (permissionsToRequest.isNotEmpty()) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        permissionsToRequest.toTypedArray(),
+                        101
+                    )
+                }
+            }
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+                if (ContextCompat.checkSelfPermission(
+                        applicationContext,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                        101
+                    )
+                }
+            }
+            else -> {
+                if (ContextCompat.checkSelfPermission(
+                        applicationContext,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                        101
+                    )
+                }
+            }
+        }
+    }
+
+    private fun showPermissionRationaleDialog() {
+        AlertDialog.Builder(applicationContext)
+            .setTitle("Storage Permission Required")
+            .setMessage("This app needs storage permission to pick and save images. Please enable the permission in settings.")
+            .setPositiveButton("Go to Settings") { _, _ ->
+                val packageName = packageName
+                val intent = Intent(
+                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:$packageName")
+                )
+                intent.addCategory(Intent.CATEGORY_DEFAULT)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
     }
 }

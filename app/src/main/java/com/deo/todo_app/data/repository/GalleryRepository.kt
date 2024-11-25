@@ -42,11 +42,11 @@ class GalleryRepository(private val galleryDao: GalleryDao, private val firebase
                     firestore.collection("users").document(userId).collection("gallery").document(media.id.toString())
                         .set(mediaData)
                         .addOnSuccessListener {
-                            val updatedMedia = media.copy(firebaseUrl = uri.toString())
-                            CoroutineScope(Dispatchers.IO).launch {
-                                galleryDao.updateGallery(updatedMedia)
-                            }
-                            onResult(true, "Uploaded successfully")
+//                            val updatedMedia = media.copy(firebaseUrl = uri.toString())
+//                            CoroutineScope(Dispatchers.IO).launch {
+//                                galleryDao.updateGallery(updatedMedia)
+//                            }
+                            onResult(true, uri.toString())
                         }
                         .addOnFailureListener { e ->
                             onResult(false, "Failed to save in Firestore: ${e.message}")
@@ -58,6 +58,7 @@ class GalleryRepository(private val galleryDao: GalleryDao, private val firebase
             }
     }
 
+    //get all media from firestore after login
     fun syncMediaFromFirestore() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         firestore.collection("users").document(userId)
@@ -78,4 +79,15 @@ class GalleryRepository(private val galleryDao: GalleryDao, private val firebase
             }
     }
 
+    //sync offline data to firestore
+    suspend fun syncOfflineGallery() {
+        val unsyncedGallery = galleryDao.getUnsyncedGallery()
+        unsyncedGallery.forEach {
+            var forResult : String? = ""
+            uploadMediaToFirebase(it, onResult = { success, result ->
+                forResult = result?:""
+            })
+            galleryDao.updateGallery(it.copy(synced = true, firebaseUrl = forResult))
+        }
+    }
 }

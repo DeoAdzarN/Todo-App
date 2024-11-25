@@ -1,5 +1,6 @@
 package com.deo.todo_app.data.repository
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.LiveData
 import com.deo.todo_app.data.local.dao.UserDao
@@ -7,6 +8,9 @@ import com.deo.todo_app.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.userProfileChangeRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class UserRepository(private val userDao: UserDao, private val auth: FirebaseAuth) {
 
@@ -30,6 +34,25 @@ class UserRepository(private val userDao: UserDao, private val auth: FirebaseAut
         updateFirebaseUser(name, onResult)
     }
 
+    fun updateUserProfile(
+        uri: Uri,
+        onResult: (Boolean, String?) -> Unit
+    ) {
+        updateFirebaseUserPicture(uri, onResult)
+    }
+    private fun updateFirebaseUserPicture(uri: Uri, onResult: (Boolean, String?) -> Unit) {
+        val firebaseUser = auth.currentUser
+        val profileUpdates = userProfileChangeRequest {
+            photoUri = uri
+        }
+        firebaseUser?.updateProfile(profileUpdates)?.addOnCompleteListener { task ->
+            if (task.isSuccessful){
+                onResult(true,firebaseUser.photoUrl.toString())
+            }else{
+                onResult(false,task.exception?.message)
+            }
+        }
+    }
     private fun updateFirebaseUser(name: String, onResult: (Boolean, String?) -> Unit) {
         val firebaseUser = auth.currentUser
         val profileUpdates = userProfileChangeRequest {
@@ -40,6 +63,22 @@ class UserRepository(private val userDao: UserDao, private val auth: FirebaseAut
                 onResult(true,null)
             }else{
                 onResult(false,task.exception?.message)
+            }
+        }
+    }
+
+    suspend fun syncOfflineUser() {
+        val unSyncedUser = userDao.getUser()
+        val firebaseUser = auth.currentUser
+        val profileUpdates = userProfileChangeRequest {
+            displayName = unSyncedUser.name
+            photoUri = if (unSyncedUser.pictureUrl == null) Uri.parse(unSyncedUser.picturePath) else Uri.parse(unSyncedUser.pictureUrl)
+        }
+        firebaseUser?.updateProfile(profileUpdates)?.addOnCompleteListener { task ->
+            if (task.isSuccessful){
+                CoroutineScope(Dispatchers.IO).launch {
+                    userDao.updateUser(unSyncedUser.copy(isSynced = true))
+                }
             }
         }
     }

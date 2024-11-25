@@ -19,6 +19,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -26,6 +27,8 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,6 +45,7 @@ import com.deo.todo_app.helper.DateTimeHelper
 import com.deo.todo_app.helper.FirebaseStorageHelper
 import com.deo.todo_app.model.Attachment
 import com.deo.todo_app.model.Task
+import com.deo.todo_app.utils.Connectivity.isInternetAvailable
 import com.deo.todo_app.utils.TaskReminders
 import com.deo.todo_app.utils.TaskStatus
 import com.deo.todo_app.view.adapter.AttachmentAdapter
@@ -133,6 +137,20 @@ class UpsertTaskBottomSheet(private val context: Context, private val task: Task
                     }
                 })
             }
+
+            statusSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    when (position) {
+                        0 -> statusSelector.setCardBackgroundColor(context.getColor(R.color.yellow))
+                        1 -> statusSelector.setCardBackgroundColor(context.getColor(R.color.light_blue))
+                        else -> statusSelector.setCardBackgroundColor(context.getColor(R.color.green))
+                    }
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    // Optional: handle no selection
+                }
+            }
         }
 
         if (task != null) {
@@ -161,6 +179,7 @@ class UpsertTaskBottomSheet(private val context: Context, private val task: Task
                     }
                 )
                 apply.setOnClickListener {
+                    Log.e("update", "onCreateView: 1" )
                     progressDialog.show(parentFragmentManager, "progressDialog")
                     val updatedTask = task.copy(
                         title = title.text.toString(),
@@ -174,39 +193,67 @@ class UpsertTaskBottomSheet(private val context: Context, private val task: Task
                             else -> "Completed"
                         },
                     )
-                    taskViewModel.updateTask(updatedTask, onResult = { userId: String, taskId: String ->
-                        if (listAttachmentRemoveId.isNotEmpty()){
-                            attachmentViewModel.removeAttachmentByTaskId(listAttachmentRemoveId)
-                        }
-                        if (listAttachment.isEmpty()){
+
+                    if (!isInternetAvailable(requireActivity())){
+                        Log.e("update", "onCreateView: 2" )
+                        taskViewModel.updateTaskOffline(updatedTask)
+                        if (listAttachment.isEmpty()) {
                             progressDialog.dismiss()
-                            TaskReminders.scheduleReminder(context, updatedTask)
-                            dismiss()
-                        }else {
-                            listAttachment.forEach { attachment -> attachment.taskId = taskId }
-                            attachmentViewModel.insertAttachment(
-                                listAttachment,
-                                onResult = { success: Boolean, message: String? ->
-                                    if (success) {
-                                        progressDialog.dismiss()
-                                        TaskReminders.scheduleReminder(context, updatedTask)
-                                        dismiss()
-                                    } else {
-                                        progressDialog.dismiss()
-                                        Toast.makeText(
-                                            context,
-                                            message.toString(),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                })
+                            Log.e("update", "onCreateView: 3" )
+
+                        } else {
+                            Log.e("update", "onCreateView: 4" )
+                            progressDialog.dismiss()
+                            listAttachment.forEach { attachment ->
+                                attachment.taskId = updatedTask.id
+                            }
+                            attachmentViewModel.insertAttachmentOffline(listAttachment)
                         }
-                    })
+                        TaskReminders.scheduleReminder(context, updatedTask)
+                        dismiss()
+                    }else {
+                        taskViewModel.updateTask(
+                            updatedTask,
+                            onResult = { userId: String, taskId: String ->
+                                if (listAttachmentRemoveId.isNotEmpty()) {
+                                    attachmentViewModel.removeAttachmentByTaskId(
+                                        listAttachmentRemoveId
+                                    )
+                                }
+                                if (listAttachment.isEmpty()) {
+                                    progressDialog.dismiss()
+                                    TaskReminders.scheduleReminder(context, updatedTask)
+                                    dismiss()
+                                } else {
+                                    listAttachment.forEach { attachment ->
+                                        attachment.taskId = taskId
+                                    }
+                                    attachmentViewModel.insertAttachment(
+                                        listAttachment,
+                                        onResult = { success: Boolean, message: String? ->
+                                            if (success) {
+                                                progressDialog.dismiss()
+                                                TaskReminders.scheduleReminder(context, updatedTask)
+                                                dismiss()
+                                            } else {
+                                                progressDialog.dismiss()
+                                                Toast.makeText(
+                                                    context,
+                                                    message.toString(),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        })
+                                }
+                            })
+                    }
                 }
             }
         } else {
+            Log.e("insert", "onCreateView: 1" )
             _binding.apply {
                 apply.setOnClickListener {
+                    Log.e("insert", "onCreateView: 2" )
                     progressDialog.show(parentFragmentManager, "progressDialog")
                     val newTask = Task(
                         title = title.text.toString(),
@@ -219,31 +266,54 @@ class UpsertTaskBottomSheet(private val context: Context, private val task: Task
                             else -> "Completed"
                         }
                     )
-                    taskViewModel.insertTask(newTask, onResult = { userId: String, taskId: String ->
-                        if (listAttachment.isEmpty()){
+
+                    if (!isInternetAvailable(requireActivity())){
+                        Log.e("insert", "onCreateView: 3" )
+                        taskViewModel.insertTaskOffline(newTask)
+                        if (listAttachment.isEmpty()) {
+                            Log.e("insert", "onCreateView: 4" )
                             progressDialog.dismiss()
-                            TaskReminders.scheduleReminder(context, newTask)
-                            dismiss()
-                        }else {
-                            listAttachment.forEach { attachment -> attachment.taskId = taskId }
-                            attachmentViewModel.insertAttachment(
-                                listAttachment,
-                                onResult = { success: Boolean, message: String? ->
-                                    if (success) {
-                                        progressDialog.dismiss()
-                                        TaskReminders.scheduleReminder(context, newTask)
-                                        dismiss()
-                                    } else {
-                                        progressDialog.dismiss()
-                                        Toast.makeText(
-                                            context,
-                                            message.toString(),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                })
+                        } else {
+                            progressDialog.dismiss()
+                            Log.e("insert", "onCreateView: 5 ${newTask.id}" )
+                            listAttachment.forEach { attachment ->
+                                attachment.taskId = newTask.id
+                            }
+                            attachmentViewModel.insertAttachmentOffline(listAttachment)
                         }
-                    })
+                        TaskReminders.scheduleReminder(context, newTask)
+                        dismiss()
+                    }else {
+                        taskViewModel.insertTask(
+                            newTask,
+                            onResult = { userId: String, taskId: String ->
+                                Log.e("insert", "step 1")
+                                if (listAttachment.isEmpty()) {
+                                    TaskReminders.scheduleReminder(context, newTask)
+                                    dismiss()
+                                } else {
+                                    listAttachment.forEach { attachment ->
+                                        attachment.taskId = taskId
+                                    }
+                                    attachmentViewModel.insertAttachment(
+                                        listAttachment,
+                                        onResult = { success: Boolean, message: String? ->
+                                            if (success) {
+                                                progressDialog.dismiss()
+                                                TaskReminders.scheduleReminder(context, newTask)
+                                                dismiss()
+                                            } else {
+                                                progressDialog.dismiss()
+                                                Toast.makeText(
+                                                    context,
+                                                    message.toString(),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        })
+                                }
+                            })
+                    }
                 }
             }
         }

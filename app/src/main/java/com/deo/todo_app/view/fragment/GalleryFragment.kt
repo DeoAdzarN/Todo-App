@@ -1,6 +1,7 @@
 package com.deo.todo_app.view.fragment
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
@@ -15,8 +16,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
+import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,6 +29,7 @@ import com.deo.todo_app.data.repository.GalleryRepository
 import com.deo.todo_app.databinding.FragmentGalleryBinding
 import com.deo.todo_app.helper.FirebaseStorageHelper
 import com.deo.todo_app.model.Gallery
+import com.deo.todo_app.utils.Connectivity.isInternetAvailable
 import com.deo.todo_app.view.activity.PreviewVideoActivity
 import com.deo.todo_app.view.adapter.GalleryAdapter
 import com.deo.todo_app.view.dialog.CustomDialog
@@ -72,12 +77,8 @@ class GalleryFragment : Fragment() {
             }
 
             _binding.addImage.setOnClickListener {
-                if (checkAndRequestPermissions()) {
-                    val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
-                        type = "*/*"
-                        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
-                    }
-                    startActivityForResult(intent, PICK_IMAGE_REQUEST)
+                if (checkAndRequestPermissions()){
+                    openGallery()
                 }
             }
 
@@ -87,6 +88,70 @@ class GalleryFragment : Fragment() {
         return view
     }
 
+    @SuppressLint("IntentReset")
+    private fun openGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
+        }
+        intent.type = "*/*"
+        pickMediaLauncher.launch(intent)
+    }
+
+    private val pickMediaLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri = result.data?.data
+            if (uri != null) {
+                progressDialog.show(parentFragmentManager, "progressDialog")
+                    selectedImageUri = uri
+                    selectedImageUri?.let { uri ->
+                        val type = getTypeFromUri(uri)
+                        val localPath = getRealPathFromUri(uri)
+
+                        if (type != null) {
+                            val gallery = Gallery(
+                                localPath = localPath,
+                                firebaseUrl = uri.toString(),
+                                type = if (type != null) {
+                                    if (type.startsWith("image/")) "image" else "video"
+                                } else {
+                                    "image"
+                                })
+                            if (isInternetAvailable(requireActivity())) {
+                                progressDialog.dismiss()
+                                viewModel.uploadImage(gallery) { success, firebaseUrl ->
+                                    if (success && firebaseUrl != null) {
+                                        progressDialog.dismiss()
+                                        viewModel.insertImage(gallery.copy(firebaseUrl = firebaseUrl, synced = true))
+                                        Toast.makeText(
+                                            context,
+                                            "Image uploaded successfully!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Failed to upload image",
+                                            Toast.LENGTH_SHORT
+                                        )
+                                            .show()
+                                    }
+                                }
+                            }else{
+                                progressDialog.dismiss()
+                                viewModel.insertImage(gallery.copy(synced = false))
+                            }
+                        }
+
+                    } ?: run {
+                        Toast.makeText(context, "No image selected", Toast.LENGTH_SHORT).show()
+                    }
+                // Handle the picked image or video URI
+                Toast.makeText(context, "Media selected: $uri", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "No media selected", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     override fun onResume() {
         super.onResume()
         viewModel.fetchAllImages()
@@ -108,61 +173,13 @@ class GalleryFragment : Fragment() {
         }
         return path
     }
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
-            progressDialog.show(parentFragmentManager, "progressDialog")
-            val uri = data.data
-            if (uri != null) {
-                selectedImageUri = uri
-                selectedImageUri?.let { uri ->
-                    val type = getTypeFromUri(uri)
-                    val localPath = getRealPathFromUri(uri)
-                    val gallery = Gallery(
-                        localPath = localPath,
-                        firebaseUrl = uri.toString(),
-                        type = if (type != null) {
-                            if (type.startsWith("image/")) "image" else "video"
-                        } else {
-                            "image"
-                        })
-                    if (type != null) {
-                        viewModel.uploadImage(gallery) { success, firebaseUrl ->
-                            if (success && firebaseUrl != null) {
-                                progressDialog.dismiss()
-                                val image = Gallery(
-                                    localPath = localPath,
-                                    firebaseUrl = firebaseUrl,
-                                    type = if (type.startsWith("image/")) "image" else "video"
-                                )
-                                viewModel.insertImage(image)
-                                Toast.makeText(
-                                    context,
-                                    "Image uploaded successfully!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                Toast.makeText(context, "Failed to upload image", Toast.LENGTH_SHORT)
-                                    .show()
-                            }
-                        }
-                    }
-
-                } ?: run {
-                    Toast.makeText(context, "No image selected", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
 
     private fun checkAndRequestPermissions(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val readImagesPermission = context?.let {
-                ContextCompat.checkSelfPermission(
-                    it,
-                    Manifest.permission.READ_MEDIA_IMAGES
-                )
-            }
+            val readImagesPermission = ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.READ_MEDIA_IMAGES
+            )
             if (readImagesPermission != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(
                     context as Activity,
@@ -174,12 +191,10 @@ class GalleryFragment : Fragment() {
                 true
             }
         } else {
-            val readStoragePermission = context?.let {
-                ContextCompat.checkSelfPermission(
-                    it,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                )
-            }
+            val readStoragePermission = ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
             if (readStoragePermission != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(
                     context as Activity,
@@ -192,7 +207,7 @@ class GalleryFragment : Fragment() {
             }
         }
     }
-
+    @SuppressLint("IntentReset")
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -201,7 +216,11 @@ class GalleryFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 101) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
+                val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
+                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
+                }
+                intent.type = "*/*"
+                pickMediaLauncher.launch(intent)
             } else {
                 if (!ActivityCompat.shouldShowRequestPermissionRationale(context as Activity, permissions[0])) {
                     showPermissionRationaleDialog()

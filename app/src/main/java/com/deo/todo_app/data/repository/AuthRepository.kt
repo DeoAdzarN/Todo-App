@@ -1,14 +1,19 @@
 package com.deo.todo_app.data.repository
 
 import android.content.Context
+import android.net.Uri
+import android.util.Log
 import com.deo.todo_app.data.local.database.AppDatabase
 import com.deo.todo_app.model.User
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.userProfileChangeRequest
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 
 class AuthRepository(private val auth:FirebaseAuth,private val userRepository: UserRepository) {
 
@@ -23,12 +28,15 @@ class AuthRepository(private val auth:FirebaseAuth,private val userRepository: U
                             userId = it.uid,
                             name = it.displayName ?: "",
                             email = it.email ?: "",
-                            isLoggedIn = true
+                            pictureUrl = it.photoUrl?.toString(),
+                            picturePath = it.photoUrl?.toString(),
+                            isLoggedIn = true,
+                            isSynced = true
                         )
-
                         CoroutineScope(Dispatchers.IO).launch {
-                            userRepository.saveUserToLocal(localUser)
+                                userRepository.saveUserToLocal(localUser)
                         }
+
                         onResult(true, null)
                     }
                 }else{
@@ -54,7 +62,10 @@ class AuthRepository(private val auth:FirebaseAuth,private val userRepository: U
                                     userId = it.uid,
                                     name = it.displayName ?: "",
                                     email = it.email ?: "",
-                                    isLoggedIn = true
+                                    picturePath = "",
+                                    pictureUrl = "",
+                                    isLoggedIn = true,
+                                    isSynced = true
                                 )
                                 CoroutineScope(Dispatchers.IO).launch {
                                     userRepository.saveUserToLocal(localUser)
@@ -79,10 +90,12 @@ class AuthRepository(private val auth:FirebaseAuth,private val userRepository: U
             val user = User(
                 userId = firebaseUser.uid,
                 name = firebaseUser.displayName ?: "",
+                pictureUrl = firebaseUser.photoUrl?.toString() ?: "",
                 email = firebaseUser.email ?: "",
-                isLoggedIn = true
+                picturePath = "",
+                isLoggedIn = true,
+                isSynced = true
             )
-            userRepository.saveUserToLocal(user)
             user
         } else {
             userRepository.getUserFromLocal()

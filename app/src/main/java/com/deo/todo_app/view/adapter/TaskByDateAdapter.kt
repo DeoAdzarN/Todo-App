@@ -11,7 +11,7 @@ import com.deo.todo_app.helper.DateTimeHelper
 import com.deo.todo_app.model.Task
 import com.deo.todo_app.view.bottomSheet.UpsertTaskBottomSheet
 
-class TaskByDateAdapter (private val fragmentManager: FragmentManager, private val tasks: List<Task>) : RecyclerView.Adapter<TaskByDateAdapter.ViewHolder>()  {
+class TaskByDateAdapter (private val fragmentManager: FragmentManager, private var tasks: List<Task>) : RecyclerView.Adapter<TaskByDateAdapter.ViewHolder>()  {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val title: TextView = itemView.findViewById(R.id.title)
         val desc: TextView = itemView.findViewById(R.id.desc)
@@ -19,7 +19,10 @@ class TaskByDateAdapter (private val fragmentManager: FragmentManager, private v
         val time: TextView = itemView.findViewById(R.id.time)
 
     }
-
+    fun updateTasks(newTasks: List<Task>) {
+        tasks = newTasks
+        notifyDataSetChanged()
+    }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.rv_item_task_calendar, parent, false))
     }

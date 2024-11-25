@@ -77,6 +77,7 @@ class TaskViewModel(private val taskRepository: TaskRepository): ViewModel() {
         }
     }
 
+
     fun fetchTasksAndSaveToRoom() {
         taskRepository.fetchTasksAndSaveToRoom()
     }
@@ -98,6 +99,22 @@ class TaskViewModel(private val taskRepository: TaskRepository): ViewModel() {
         }
     }
 
+    fun insertTaskOffline(task: Task){
+        viewModelScope.launch {
+            taskRepository.insertTaskOffline(task)
+        }
+    }
+
+    fun updateTaskOffline(task: Task){
+        viewModelScope.launch {
+            taskRepository.updateTaskOffline(task)
+        }
+    }
+    fun syncTaskToFirestore() {
+        viewModelScope.launch {
+            taskRepository.syncOfflineTasks()
+        }
+    }
     fun parseAttachments(json: String): List<Attachment> {
         return taskRepository.parseAttachments(json)
     }

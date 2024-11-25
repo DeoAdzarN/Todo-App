@@ -18,6 +18,13 @@ class AttachmentViewModel(private val attachmentRepository: AttachmentRepository
             attachmentRepository.insertAttachment(attachments, onResult)
         }
     }
+
+    fun insertAttachmentOffline(attachments:List<Attachment>) {
+        viewModelScope.launch {
+            attachmentRepository.insertAttachmentOffline(attachments)
+        }
+    }
+
     fun fetchMediaAndSaveToRoom() {
         attachmentRepository.syncMediaFromFirestore()
     }
@@ -37,6 +44,12 @@ class AttachmentViewModel(private val attachmentRepository: AttachmentRepository
        viewModelScope.launch {
            _attachment.postValue(attachmentRepository.getAttachmentsByTaskId(taskId))
        }
+    }
+
+    fun syncAttachmentToFirestore() {
+        viewModelScope.launch {
+            attachmentRepository.syncOfflineAttach()
+        }
     }
 
     private val _mediaList = MutableLiveData<List<Attachment>>(emptyList())

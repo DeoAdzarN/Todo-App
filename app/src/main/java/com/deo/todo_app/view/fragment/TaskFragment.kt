@@ -19,13 +19,16 @@ import com.deo.todo_app.viewModel.CalendarViewModel
 import com.deo.todo_app.viewModel.factory.CalendarViewModelFactory
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 class TaskFragment : Fragment() {
     private lateinit var _binding: FragmentTaskBinding
     private lateinit var calendarAdapter: CustomCalendarAdapter
+    private lateinit var tasksAdapter: TaskByDateAdapter
     private lateinit var calendarViewModel: CalendarViewModel
     private val days: MutableList<Calendar> = mutableListOf()
 
@@ -50,8 +53,7 @@ class TaskFragment : Fragment() {
                     calendarAdapter = CustomCalendarAdapter(it, days, tasks) { tasksOnDate,date ->
                         //display task by date
                         _binding.taskOnDate.text = "Task on $date"
-                        val adapter = TaskByDateAdapter(parentFragmentManager, tasksOnDate)
-                        _binding.rvTaskOnDate.adapter = adapter
+                        getTaskByDate(date)
                         if (tasksOnDate.isEmpty()){
                             _binding.emptyTask.visibility = View.VISIBLE
                             _binding.rvTaskOnDate.visibility = View.GONE
@@ -73,6 +75,7 @@ class TaskFragment : Fragment() {
                         calendarViewModel.loadTask(getMonthStartMillis(currentYear, currentMonth), getMonthStartMillis(currentYear, currentMonth + 1))
                     }
                     bottomSheet.show(parentFragmentManager, "UpsertTaskBottomSheet")
+
                 }
 
                 nextButton.setOnClickListener {
@@ -96,6 +99,50 @@ class TaskFragment : Fragment() {
             }
         }
         return view
+    }
+    private fun getStartAndEndOfDay(date: Long): Pair<Long, Long> {
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = date
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val startOfDay = calendar.timeInMillis
+
+        calendar.apply {
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
+        }
+        val endOfDay = calendar.timeInMillis
+
+        return startOfDay to endOfDay
+    }
+    private fun getTaskByDate(date: String) {
+
+        val dateFormatter = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+        val dates: Date? = try {
+            dateFormatter.parse(date)
+        } catch (e: ParseException) {
+            e.printStackTrace()
+            null
+        }
+
+        if (dates != null) {
+            val (startOfDay, endOfDay) = getStartAndEndOfDay(dates.time)
+            calendarViewModel.getTasksByDate(startOfDay,endOfDay)
+        }
+
+        if (!this::tasksAdapter.isInitialized) {
+            tasksAdapter = TaskByDateAdapter(parentFragmentManager, emptyList())
+            _binding.rvTaskOnDate.adapter = tasksAdapter
+        }
+
+        calendarViewModel.tasksByDate.observe(viewLifecycleOwner) { tasks ->
+            tasksAdapter.updateTasks(tasks)
+        }
     }
 
     override fun onResume() {

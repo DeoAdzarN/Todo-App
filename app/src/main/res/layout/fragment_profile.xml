@@ -29,6 +29,27 @@
             android:layout_height="wrap_content"
             android:padding="10dp"
             android:orientation="vertical">
+
+            <RelativeLayout
+                android:id="@+id/editPicture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="10dp"
+                android:layout_gravity="center">
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/picture"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/default_profile_picture"/>
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignBottom="@id/picture"
+                    android:layout_alignEnd="@id/picture"
+                    android:src="@drawable/ic_edit"/>
+            </RelativeLayout>
+
+
             <androidx.cardview.widget.CardView
                 android:id="@+id/changeName"
                 android:layout_width="match_parent"

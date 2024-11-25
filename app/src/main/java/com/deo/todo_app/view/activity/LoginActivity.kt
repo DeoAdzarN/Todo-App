@@ -21,6 +21,7 @@ import com.deo.todo_app.data.repository.UserRepository
 import com.deo.todo_app.utils.NotificationBarHelper
 import com.deo.todo_app.databinding.ActivityLoginBinding
 import com.deo.todo_app.utils.TaskReminders
+import com.deo.todo_app.view.dialog.CustomDialog
 import com.deo.todo_app.viewModel.AttachmentViewModel
 import com.deo.todo_app.viewModel.AuthViewModel
 import com.deo.todo_app.viewModel.GalleryViewModel
@@ -42,6 +43,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var taskViewModel: TaskViewModel
     private lateinit var galleryViewModel: GalleryViewModel
     private lateinit var attachmentViewModel: AttachmentViewModel
+    private val progressDialog = CustomDialog.ProgressDialogFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,12 +87,14 @@ class LoginActivity : AppCompatActivity() {
                 toggleVisibilityPassword(inputPassword, visibilityPassword)
             }
             loginBtn.setOnClickListener {
+                progressDialog.show(supportFragmentManager, "loading")
                 if (validate()){
                     authViewModel.login(
                         email = inputEmail.text.toString(),
                         password = inputPassword.text.toString(),
                         onResult = { success, message ->
                             if (success){
+                                progressDialog.dismiss()
                                 Toast.makeText(applicationContext, "Login successfully", Toast.LENGTH_SHORT).show()
                                 taskViewModel.fetchTasksAndSaveToRoom()
                                 galleryViewModel.fetchGalleryAndSaveToRoom()
@@ -105,10 +109,13 @@ class LoginActivity : AppCompatActivity() {
                                     flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
                                 })
                             }else{
+                                progressDialog.dismiss()
                                 Toast.makeText(applicationContext, message.toString(), Toast.LENGTH_SHORT).show()
                             }
                         }
                     )
+                }else{
+                    progressDialog.dismiss()
                 }
             }
         }

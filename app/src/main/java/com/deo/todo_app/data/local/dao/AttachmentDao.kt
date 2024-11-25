@@ -5,7 +5,9 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.deo.todo_app.model.Attachment
+import com.deo.todo_app.model.Gallery
 
 @Dao
 interface AttachmentDao {
@@ -21,4 +23,10 @@ interface AttachmentDao {
 
     @Query("SELECT * FROM attachment")
     fun getAllAttachment(): List<Attachment>
+
+    @Query("SELECT * FROM attachment WHERE synced = 0")
+    suspend fun getUnsyncedAttach(): List<Attachment>
+
+    @Update
+    suspend fun updateAttach(attachment: Attachment)
 }

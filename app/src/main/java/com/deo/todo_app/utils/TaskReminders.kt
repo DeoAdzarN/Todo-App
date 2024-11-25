@@ -14,24 +14,40 @@ import java.util.concurrent.TimeUnit
 
 object TaskReminders {
     fun scheduleReminder(context: Context, task: Task) {
-        val workRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
+        val remindWorkRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
             .setInitialDelay(calculateDelay(task.reminder), TimeUnit.MILLISECONDS)
-            .setInputData(workDataOf(
-                "taskId" to task.id,
-                "title" to task.title,
-                "desc" to task.description
-            ))
+            .setInputData(
+                workDataOf(
+                    "taskId" to task.id,
+                    "title" to task.title,
+                    "desc" to task.description
+                )
+            )
             .build()
+
+        // Work kedua untuk dateTime
+        val dateTimeWorkRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
+            .setInitialDelay(calculateDelay(task.date), TimeUnit.MILLISECONDS)
+            .setInputData(
+                workDataOf(
+                    "taskId" to task.id,
+                    "title" to task.title,
+                    "desc" to task.description
+                )
+            )
+            .build()
+
+        val listWorkRequest = listOf(remindWorkRequest, dateTimeWorkRequest)
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             "Reminder_${task.id}",
             ExistingWorkPolicy.REPLACE,
-            workRequest
+            listWorkRequest
         )
     }
 
-    private fun calculateDelay(remindTime: Long): Long {
+    private fun calculateDelay(destinationTime: Long): Long {
         val currentTime = System.currentTimeMillis()
-        return remindTime - currentTime
+        return destinationTime - currentTime
     }
 }

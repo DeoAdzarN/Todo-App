@@ -9,5 +9,6 @@ data class Gallery(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val localPath: String = "",
     val firebaseUrl: String? = null,
-    val type: String = "image"
+    val type: String = "image",
+    val synced: Boolean = false
 )

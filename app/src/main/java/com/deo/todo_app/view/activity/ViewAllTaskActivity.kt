@@ -10,6 +10,7 @@ import com.deo.todo_app.data.local.database.AppDatabase
 import com.deo.todo_app.data.repository.TaskRepository
 import com.deo.todo_app.databinding.ActivityViewAllTaskBinding
 import com.deo.todo_app.utils.NotificationBarHelper
+import com.deo.todo_app.view.adapter.AllTaskByStatusAdapter
 import com.deo.todo_app.view.adapter.HomeChildAdapter
 import com.deo.todo_app.viewModel.TaskViewModel
 import com.deo.todo_app.viewModel.factory.TaskViewModelFactory
@@ -59,7 +60,7 @@ class ViewAllTaskActivity : AppCompatActivity() {
 
     private fun observeData() {
         taskViewModel.allTaskByStatus.observe(this) { tasks ->
-            val childAdapter = HomeChildAdapter(supportFragmentManager,tasks)
+            val childAdapter = AllTaskByStatusAdapter(supportFragmentManager,tasks)
             _binding.rvTask.adapter = childAdapter
             _binding.rvTask.layoutManager = LinearLayoutManager(this)
 
