@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardCornerRadius="12dp"
+    android:layout_margin="10dp">
+    <LinearLayout
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Change Your Name"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:gravity="center"
+            android:paddingBottom="8dp" />
+
+        <EditText
+            android:id="@+id/inputName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:gravity="center"
+            android:layout_weight="1"
+            android:background="@null"
+            android:inputType="textEmailAddress"
+            android:fontFamily="@font/poppins_500"
+            android:singleLine="true"
+            android:textSize="14sp"
+            android:hint="Your Name"
+            />
+        <Button
+            android:id="@+id/saveBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:fontFamily="@font/poppins_500"
+            android:textAllCaps="false"
+            android:background="@drawable/background_default"
+            android:text="Save"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -1,0 +1,37 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.TodoApp" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="android:fontFamily">@font/poppins_400</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textColor">@color/black</item>
+
+        <item name="backgroundColor">@color/white</item>
+
+    </style>
+    <style name="Theme.App.SplashScreen" parent="Theme.SplashScreen">
+        <!-- Set the splash screen background, animated icon, and animation
+        duration. -->
+        <item name="windowSplashScreenBackground">@color/white</item>
+
+        <!-- Use windowSplashScreenAnimatedIcon to add a drawable or an animated
+             drawable. One of these is required. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_foreground</item>
+        <!-- Required for animated icons. -->
+        <item name="windowSplashScreenAnimationDuration">100</item>
+
+        <!-- Set the theme of the Activity that directly follows your splash
+        screen. This is required. -->
+        <item name="postSplashScreenTheme">@style/Theme.TodoApp</item>
+    </style>
+    <style name="Theme.TodoApp" parent="Base.Theme.TodoApp" />
+    <style name="RoundedBottomSheetDialog" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/RoundedBottomSheet</item>
+    </style>
+
+    <style name="RoundedBottomSheet" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@drawable/background_bs_upsert_task</item>
+    </style>
+
+</resources>

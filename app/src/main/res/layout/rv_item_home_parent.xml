@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:cardElevation="1dp"
+    app:cardBackgroundColor="@color/yellow"
+    android:layout_margin="5dp"
+    app:cardCornerRadius="12dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="10dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="15dp">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Pending"
+                android:textSize="17sp"
+                android:fontFamily="@font/poppins_600"/>
+
+            <TextView
+                android:id="@+id/viewAll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10dp"
+                android:text="View All"
+                android:textColor="#a0a0a0"
+                android:textSize="12sp"/>
+        </LinearLayout>
+        <TextView
+            android:id="@+id/emptyTask"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="10dp"
+            android:visibility="gone"
+            android:text="You don't have any task"/>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvChild"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:itemCount="3"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            android:orientation="vertical"
+            android:nestedScrollingEnabled="false"
+            tools:listitem="@layout/rv_item_task_home"/>
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

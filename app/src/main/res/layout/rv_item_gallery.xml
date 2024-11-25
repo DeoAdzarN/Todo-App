@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardElevation="1dp"
+    app:cardCornerRadius="12dp">
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <com.makeramen.roundedimageview.RoundedImageView
+            android:id="@+id/thumbnail"
+            android:layout_width="wrap_content"
+            android:layout_height="100dp"
+            android:maxHeight="100dp"
+            android:maxWidth="100dp"
+            android:scaleType="fitCenter"
+            app:riv_corner_radius="5dp"
+            android:src="@drawable/default_profile_picture"/>
+        <ImageView
+            android:id="@+id/videoIcon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:visibility="gone"
+            android:src="@drawable/ic_play_video"
+            android:layout_alignEnd="@id/thumbnail"
+            android:layout_alignBottom="@id/thumbnail"/>
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>

@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Todo-App</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="entry_point_signup">Don\'t have any account?</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="login">Login</string>
+    <string name="welcome_sign">Welcome</string>
+    <string name="entry_point_login">Have any account?</string>
+    <string name="register">Register</string>
+    <string name="hint_name">Name</string>
+    <string name="email_cannot_empty">Email cannot be empty</string>
+    <string name="name_cannot_empty">Name cannot be empty</string>
+    <string name="password_cannot_empty">Password cannot be empty</string>
+    <string name="hint_confirm_password">Confirm Password</string>
+    <string name="confirm_password_diff">Password doesn\'t same</string>
+
+    <string-array name="status">
+        <item>Pending</item>
+        <item>Progress</item>
+        <item>Completed</item>
+    </string-array>
+    <string name="format_email_error">Email not valid</string>
+</resources>

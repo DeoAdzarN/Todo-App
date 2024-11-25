@@ -1,0 +1,68 @@
+[versions]
+agp = "8.7.2"
+circleimageview = "3.1.0"
+compiler = "4.16.0"
+coreKtxVersion = "1.12.0"
+coreSplashscreen = "1.0.1"
+exoplayer = "2.20.0"
+firebaseBom = "33.6.0"
+glide = "4.16.0"
+gson = "2.10.1"
+kotlin = "1.9.24"
+coreKtx = "1.15.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.0"
+kotlinxCoroutinesAndroid = "1.7.3"
+lifecycleViewmodelKtx = "2.6.1"
+material = "1.12.0"
+activity = "1.9.3"
+constraintlayout = "2.2.0"
+firebaseFirestore = "25.1.1"
+firebaseAuth = "23.1.0"
+materialCalendarView = "1.9.2"
+roomRuntime = "2.6.1"
+roundedimageview = "2.3.0"
+googleGmsGoogleServices = "4.4.2"
+workRuntimeKtx = "2.10.0"
+media3Exoplayer = "1.4.1"
+media3Ui = "1.4.1"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-ktx-v1120 = { module = "androidx.core:core-ktx", version.ref = "coreKtxVersion" }
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
+circleimageview = { module = "de.hdodenhof:circleimageview", version.ref = "circleimageview" }
+compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
+exoplayer = { module = "com.google.android.exoplayer:exoplayer", version.ref = "exoplayer" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-storage = { module = "com.google.firebase:firebase-storage" }
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
+material-calendar-view = { module = "com.applandeo:material-calendar-view", version.ref = "materialCalendarView" }
+roundedimageview = { module = "com.makeramen:roundedimageview", version.ref = "roundedimageview" }
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3Exoplayer" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3Ui" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
+
