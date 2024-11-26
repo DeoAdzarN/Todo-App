@@ -21,4 +21,5 @@
         <item>Completed</item>
     </string-array>
     <string name="format_email_error">Email not valid</string>
+    <string name="greeting">Hello</string>
 </resources>

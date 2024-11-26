@@ -12,7 +12,8 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_above="@id/mainContainer"
-        android:textSize="30dp"
+        android:textAlignment="center"
+        android:textSize="30sp"
         android:fontFamily="@font/poppins_600"
         android:text="Halo, Deo !"/>
 

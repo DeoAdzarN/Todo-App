@@ -4,19 +4,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/cream"
     tools:context=".view.activity.PreviewVideoActivity">
     <androidx.media3.ui.PlayerView
         android:id="@+id/exoPlayerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <ImageButton
-        android:id="@+id/closeButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+    <androidx.cardview.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_margin="16dp"
-        android:background="@null"
-        android:src="@drawable/ic_close"
-        android:contentDescription="Close" />
+        app:cardCornerRadius="20dp">
+        <ImageButton
+            android:id="@+id/closeButton"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:background="@null"
+            app:tint="@color/black"
+            android:src="@drawable/ic_close"
+            android:contentDescription="Close" />
+    </androidx.cardview.widget.CardView>
+
 </RelativeLayout>

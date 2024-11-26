@@ -22,4 +22,5 @@
         <item>Selesai</item>
     </string-array>
     <string name="format_email_error">Email tidak valid</string>
+    <string name="greeting">Halo</string>
 </resources>

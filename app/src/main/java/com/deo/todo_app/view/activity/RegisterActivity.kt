@@ -17,6 +17,7 @@ import com.deo.todo_app.data.repository.AuthRepository
 import com.deo.todo_app.data.repository.UserRepository
 import com.deo.todo_app.utils.NotificationBarHelper
 import com.deo.todo_app.databinding.ActivityRegisterBinding
+import com.deo.todo_app.view.dialog.CustomDialog
 import com.deo.todo_app.viewModel.AuthViewModel
 import com.deo.todo_app.viewModel.factory.AuthViewModelFactory
 import com.google.firebase.Firebase
@@ -25,6 +26,7 @@ import com.google.firebase.auth.auth
 class RegisterActivity : AppCompatActivity() {
     private lateinit var _binding: ActivityRegisterBinding
     private lateinit var authViewModel: AuthViewModel
+    private val progressDialog = CustomDialog.ProgressDialogFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +56,7 @@ class RegisterActivity : AppCompatActivity() {
             }
 
             registerBtn.setOnClickListener {
+                progressDialog.show(supportFragmentManager, "loading")
                 if(validate()){
                     authViewModel.register(
                         name = inputName.text.toString(),
@@ -61,16 +64,20 @@ class RegisterActivity : AppCompatActivity() {
                         password = inputPassword.text.toString(),
                         onResult = { success, message ->
                             if (success){
+                                progressDialog.dismiss()
                                 startActivity(Intent(this@RegisterActivity, MainActivity::class.java).apply {
                                     flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
                                 })
                                 Toast.makeText(applicationContext, "Register successfully", Toast.LENGTH_SHORT).show()
                             }else{
+                                progressDialog.dismiss()
                                 Log.e("register", "onCreate: $message", )
                                 Toast.makeText(applicationContext, message.toString(), Toast.LENGTH_SHORT).show()
                             }
                         }
                     )
+                }else{
+                    progressDialog.dismiss()
                 }
             }
         }

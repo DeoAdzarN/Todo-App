@@ -63,6 +63,13 @@ class GalleryFragment : Fragment() {
             viewModel = ViewModelProvider(this, galleryFactory)[GalleryViewModel::class.java]
 
             viewModel.imagesLiveData.observe(viewLifecycleOwner) { galleryList ->
+                if (galleryList.isEmpty()) {
+                    _binding.rvGallery.visibility = View.GONE
+                    _binding.emptyState.visibility = View.VISIBLE
+                } else {
+                    _binding.rvGallery.visibility = View.VISIBLE
+                    _binding.emptyState.visibility = View.GONE
+                }
                 _binding.rvGallery.adapter = GalleryAdapter(it, galleryList) { it ->
                     //setOnClick
                     if (it.type == "image") {
@@ -117,7 +124,6 @@ class GalleryFragment : Fragment() {
                                     "image"
                                 })
                             if (isInternetAvailable(requireActivity())) {
-                                progressDialog.dismiss()
                                 viewModel.uploadImage(gallery) { success, firebaseUrl ->
                                     if (success && firebaseUrl != null) {
                                         progressDialog.dismiss()
@@ -145,8 +151,6 @@ class GalleryFragment : Fragment() {
                     } ?: run {
                         Toast.makeText(context, "No image selected", Toast.LENGTH_SHORT).show()
                     }
-                // Handle the picked image or video URI
-                Toast.makeText(context, "Media selected: $uri", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(context, "No media selected", Toast.LENGTH_SHORT).show()
             }

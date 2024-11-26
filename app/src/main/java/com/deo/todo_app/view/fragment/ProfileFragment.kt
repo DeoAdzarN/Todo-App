@@ -81,10 +81,23 @@ class ProfileFragment : Fragment() {
             userViewModel.userData.observe(viewLifecycleOwner) { user ->
                 name = user?.name
                 Log.e("userData", "onCreateView: ${user?.pictureUrl}, ${user?.picturePath}" )
+                val file = copyFileFromUri(requireContext(), Uri.parse(user?.picturePath))
+
+                if (isInternetAvailable(context as Activity)){
                     Glide.with(it)
-                        .load(user?.pictureUrl)
+                        .load(if(user?.pictureUrl.isNullOrEmpty()) file else user?.pictureUrl)
                         .placeholder(R.drawable.default_profile_picture)
                         .into(_binding.picture)
+                }else {
+                    file.let { files ->
+                        Glide.with(requireContext())
+                            .load(files)
+                            .placeholder(R.drawable.default_profile_picture)
+                            .error(R.drawable.background_placeholder)
+                            .into(_binding.picture)
+                    }
+
+                }
                 _binding.greeting.text = "Halo, ${user?.name} !"
 
             }
@@ -183,40 +196,54 @@ class ProfileFragment : Fragment() {
 
         return view
     }
-        private fun getFileFromUri(context: Context, uri: Uri): File? {
-            return if (uri.scheme == "content") {
-                // Try resolving the actual file path
-                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    val columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
-                    cursor.moveToFirst()
-                    val filePath = cursor.getString(columnIndex)
-                    File(filePath)
+    private fun getRealPathFromURI(context: Context, uri: Uri): String? {
+        var realPath: String? = null
+        if (uri.scheme == "content") {
+            val cursor = context.contentResolver.query(uri, null, null, null, null)
+            if (cursor != null) {
+                val index = cursor.getColumnIndex("_data")
+                if (index != -1 && cursor.moveToFirst()) {
+                    realPath = cursor.getString(index)
                 }
-            } else if (uri.scheme == "file") {
-                File(uri.path)
-            } else {
-                null
+                cursor.close()
             }
+        } else if (uri.scheme == "file") {
+            realPath = uri.path
         }
+        return realPath
+    }
     @SuppressLint("IntentReset")
     private fun openGallery() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         intent.type = "image/*"
         pickMediaLauncher.launch(intent)
     }
-
+    private fun copyFileFromUri(context: Context, uri: Uri): File? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val tempFile = File(context.cacheDir, "${System.currentTimeMillis()}.jpg")
+            tempFile.outputStream().use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+            tempFile
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
     private val pickMediaLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val uri = result.data?.data
             if (uri != null) {
                 progressDialog.show(parentFragmentManager, "progressDialog")
-                uri.let { uri ->
+                uri.let { _uri ->
                     try {
                         activity?.let {
                             if (isInternetAvailable(it)){
-                                userViewModel.updatePicture(uri, onResult = { success, message ->
+                                userViewModel.updatePicture(_uri, onResult = { success, message ->
                                     if (success) {
-                                        Glide.with(it).load(uri)
+                                        Log.d("GlideDebug", "URI: $_uri")
+                                        Glide.with(it).load(_uri)
                                             .placeholder(R.drawable.default_profile_picture)
                                             .into(_binding.picture)
                                         Toast.makeText(
@@ -229,12 +256,18 @@ class ProfileFragment : Fragment() {
                                     }
                                 })
                             }else{
-                                val update = userViewModel.userData.value?.copy(picturePath = uri.toString(), pictureUrl = "")
+                                val update = userViewModel.userData.value?.copy(picturePath = _uri.toString(), pictureUrl = "", isSynced = false)
                                 if (update!=null) {
                                     userViewModel.updateUserLocal(update)
-                                    Glide.with(it).load(uri)
-                                        .placeholder(R.drawable.default_profile_picture)
-                                        .into(_binding.picture)
+                                    val file = copyFileFromUri(requireContext(), Uri.parse(update.picturePath))
+                                    Log.d("GlideDebug", "URI: $_uri, Path : ${file?.path.toString()}")
+                                    file?.let { files->
+                                        Glide.with(requireContext())
+                                            .load(files)
+                                            .placeholder(R.drawable.default_profile_picture)
+                                            .error(R.drawable.background_placeholder)
+                                            .into(_binding.picture)
+                                    }
                                 }
                                 Toast.makeText(
                                     context,

@@ -19,6 +19,14 @@
             android:textSize="20sp"
             android:text="Gallery"/>
     </RelativeLayout>
+
+    <TextView
+        android:id="@+id/emptyState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="You don't have any images yet"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:layout_below="@id/actionBar"
         android:layout_width="match_parent"

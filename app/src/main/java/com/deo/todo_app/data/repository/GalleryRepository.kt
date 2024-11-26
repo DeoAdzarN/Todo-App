@@ -1,7 +1,9 @@
 package com.deo.todo_app.data.repository
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import com.deo.todo_app.data.local.dao.GalleryDao
 import com.deo.todo_app.helper.FirebaseStorageHelper
 import com.deo.todo_app.model.Gallery
@@ -12,10 +14,13 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
+import kotlin.coroutines.resume
 
-class GalleryRepository(private val galleryDao: GalleryDao, private val firebaseStorage: FirebaseStorage,
-                        private val firestore: FirebaseFirestore
+class GalleryRepository(
+    private val galleryDao: GalleryDao, private val firebaseStorage: FirebaseStorage,
+    private val firestore: FirebaseFirestore
 ) {
     suspend fun insertImage(image: Gallery): Long {
         return galleryDao.insertImage(image)
@@ -39,13 +44,10 @@ class GalleryRepository(private val galleryDao: GalleryDao, private val firebase
                         "type" to media.type
                     )
 
-                    firestore.collection("users").document(userId).collection("gallery").document(media.id.toString())
+                    firestore.collection("users").document(userId).collection("gallery")
+                        .document(media.id.toString())
                         .set(mediaData)
                         .addOnSuccessListener {
-//                            val updatedMedia = media.copy(firebaseUrl = uri.toString())
-//                            CoroutineScope(Dispatchers.IO).launch {
-//                                galleryDao.updateGallery(updatedMedia)
-//                            }
                             onResult(true, uri.toString())
                         }
                         .addOnFailureListener { e ->
@@ -82,12 +84,25 @@ class GalleryRepository(private val galleryDao: GalleryDao, private val firebase
     //sync offline data to firestore
     suspend fun syncOfflineGallery() {
         val unsyncedGallery = galleryDao.getUnsyncedGallery()
-        unsyncedGallery.forEach {
-            var forResult : String? = ""
-            uploadMediaToFirebase(it, onResult = { success, result ->
-                forResult = result?:""
+        for (item in unsyncedGallery) {
+            val forResult = uploadMediaToFirebaseSuspend(item)
+            if (forResult != null) {
+                galleryDao.updateGallery(item.copy(synced = true, firebaseUrl = forResult))
+            }
+        }
+    }
+
+    private suspend fun uploadMediaToFirebaseSuspend(item: Gallery): String? {
+        return suspendCancellableCoroutine { continuation ->
+            uploadMediaToFirebase(item, onResult = { success, result ->
+                if (continuation.isActive) {
+                    if (success) {
+                        continuation.resume(result) // Kembalikan result jika success true
+                    } else {
+                        continuation.resume(null) // Kembalikan null jika success false
+                    }
+                }
             })
-            galleryDao.updateGallery(it.copy(synced = true, firebaseUrl = forResult))
         }
     }
 }

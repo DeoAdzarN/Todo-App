@@ -64,21 +64,21 @@ class CustomCalendarAdapter(private val context: Context, private val days: List
                     eventText.visibility = View.VISIBLE
                     eventText2.visibility = View.GONE
                     eventTextMore.visibility = View.GONE
-                    eventText.text = tasks[0].title
+                    eventText.text = tasks[tasks.size - 1 ].title
                 }
                 2 -> {
                     eventText.visibility = View.VISIBLE
                     eventText2.visibility = View.VISIBLE
                     eventTextMore.visibility = View.GONE
-                    eventText.text = tasks[0].title
-                    eventText2.text = tasks[1].title
+                    eventText.text = tasks[tasks.size -1 ].title
+                    eventText2.text = tasks[tasks.size-2].title
                 }
                 else -> {
                     eventText.visibility = View.VISIBLE
                     eventText2.visibility = View.VISIBLE
                     eventTextMore.visibility = View.VISIBLE
-                    eventText.text = tasks[0].title
-                    eventText2.text = tasks[1].title
+                    eventText.text = tasks[tasks.size -1 ].title
+                    eventText2.text = tasks[tasks.size-2].title
                     eventTextMore.text = "+${tasks.size - 2} more.."
                 }
             }

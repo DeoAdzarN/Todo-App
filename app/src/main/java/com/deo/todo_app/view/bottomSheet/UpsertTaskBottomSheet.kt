@@ -289,6 +289,7 @@ class UpsertTaskBottomSheet(private val context: Context, private val task: Task
                             onResult = { userId: String, taskId: String ->
                                 Log.e("insert", "step 1")
                                 if (listAttachment.isEmpty()) {
+                                    progressDialog.dismiss()
                                     TaskReminders.scheduleReminder(context, newTask)
                                     dismiss()
                                 } else {

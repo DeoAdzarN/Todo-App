@@ -5,95 +5,102 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".view.fragment.TaskFragment">
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:fillViewport="true">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:padding="8dp">
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:padding="8dp">
 
-            <ImageView
-                android:id="@+id/prevButton"
-                android:layout_width="45dp"
-                android:layout_height="40dp"
-                app:tint="@color/cream"
-                android:backgroundTint="@color/cream"
-                android:src="@drawable/ic_arrow_left" />
+                <ImageView
+                    android:id="@+id/prevButton"
+                    android:layout_width="45dp"
+                    android:layout_height="40dp"
+                    app:tint="@color/cream"
+                    android:backgroundTint="@color/cream"
+                    android:src="@drawable/ic_arrow_left" />
+
+                <TextView
+                    android:id="@+id/monthText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:text="January"
+                    android:textSize="18sp" />
+
+                <ImageView
+                    android:id="@+id/nextButton"
+                    android:layout_width="45dp"
+                    android:layout_height="40dp"
+                    app:tint="@color/cream"
+                    android:src="@drawable/ic_arrow_right"/>
+            </LinearLayout>
+
+            <!-- Calendar Grid -->
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="15dp">
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView android:layout_weight="1" android:gravity="center" android:text="Sun" android:paddingHorizontal="8dp"/>
+                    <TextView android:layout_weight="1" android:gravity="center" android:text="Mon" android:paddingHorizontal="8dp"/>
+                    <TextView android:layout_weight="1" android:gravity="center" android:text="Tue" android:paddingHorizontal="8dp"/>
+                    <TextView android:layout_weight="1" android:gravity="center" android:text="Wed" android:paddingHorizontal="8dp"/>
+                    <TextView android:layout_weight="1" android:gravity="center" android:text="Thu" android:paddingHorizontal="8dp"/>
+                    <TextView android:layout_weight="1" android:gravity="center" android:text="Fri" android:paddingHorizontal="8dp"/>
+                    <TextView android:layout_weight="1" android:gravity="center" android:text="Sat" android:paddingHorizontal="8dp"/>
+                </TableRow>
+            </TableLayout>
+
+            <GridView
+                android:id="@+id/calendarGridView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:numColumns="7"
+                android:verticalSpacing="8dp"
+                android:horizontalSpacing="8dp"
+                tools:listitem="@layout/calendar_day"
+                android:gravity="center" />
 
             <TextView
-                android:id="@+id/monthText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:text="January"
-                android:textSize="18sp" />
-
-            <ImageView
-                android:id="@+id/nextButton"
-                android:layout_width="45dp"
-                android:layout_height="40dp"
-                app:tint="@color/cream"
-                android:src="@drawable/ic_arrow_right"/>
-        </LinearLayout>
-
-        <!-- Calendar Grid -->
-        <TableLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="15dp">
-            <TableRow
+                android:id="@+id/taskOnDate"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <TextView android:layout_weight="1" android:gravity="center" android:text="Sun" android:paddingHorizontal="8dp"/>
-                <TextView android:layout_weight="1" android:gravity="center" android:text="Mon" android:paddingHorizontal="8dp"/>
-                <TextView android:layout_weight="1" android:gravity="center" android:text="Tue" android:paddingHorizontal="8dp"/>
-                <TextView android:layout_weight="1" android:gravity="center" android:text="Wed" android:paddingHorizontal="8dp"/>
-                <TextView android:layout_weight="1" android:gravity="center" android:text="Thu" android:paddingHorizontal="8dp"/>
-                <TextView android:layout_weight="1" android:gravity="center" android:text="Fri" android:paddingHorizontal="8dp"/>
-                <TextView android:layout_weight="1" android:gravity="center" android:text="Sat" android:paddingHorizontal="8dp"/>
-            </TableRow>
-        </TableLayout>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginHorizontal="10dp"
+                android:fontFamily="@font/poppins_600"
+                android:text="Task On Date"/>
 
-        <GridView
-            android:id="@+id/calendarGridView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:numColumns="7"
-            android:verticalSpacing="8dp"
-            android:horizontalSpacing="8dp"
-            tools:listitem="@layout/calendar_day"
-            android:gravity="center" />
+            <TextView
+                android:id="@+id/emptyTask"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="10dp"
+                android:text="Select on date to show your task"/>
 
-        <TextView
-            android:id="@+id/taskOnDate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginHorizontal="10dp"
-            android:fontFamily="@font/poppins_600"
-            android:text="Task On Date"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvTaskOnDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                android:orientation="vertical"
+                tools:listitem="@layout/rv_item_task_calendar"/>
+        </LinearLayout>
+    </ScrollView>
 
-        <TextView
-            android:id="@+id/emptyTask"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginTop="10dp"
-            android:text="Select on date to show your task"/>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvTaskOnDate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            android:orientation="vertical"
-            tools:listitem="@layout/rv_item_task_calendar"/>
-    </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/addTask"

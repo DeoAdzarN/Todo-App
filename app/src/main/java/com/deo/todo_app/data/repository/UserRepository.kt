@@ -72,12 +72,12 @@ class UserRepository(private val userDao: UserDao, private val auth: FirebaseAut
         val firebaseUser = auth.currentUser
         val profileUpdates = userProfileChangeRequest {
             displayName = unSyncedUser.name
-            photoUri = if (unSyncedUser.pictureUrl == null) Uri.parse(unSyncedUser.picturePath) else Uri.parse(unSyncedUser.pictureUrl)
+            photoUri = Uri.parse(unSyncedUser.picturePath)
         }
         firebaseUser?.updateProfile(profileUpdates)?.addOnCompleteListener { task ->
             if (task.isSuccessful){
                 CoroutineScope(Dispatchers.IO).launch {
-                    userDao.updateUser(unSyncedUser.copy(isSynced = true))
+                    userDao.updateUser(unSyncedUser.copy(isSynced = true,pictureUrl = firebaseUser.photoUrl.toString(),picturePath = unSyncedUser.picturePath))
                 }
             }
         }
